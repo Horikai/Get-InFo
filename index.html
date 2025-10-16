@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Informações Completas do Jogador Free Fire</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    .entity-avatar {
+      display: block;
+      margin: 0 auto 15px auto;
+      border-radius: 12px;
+      max-width: 220px;
+      border: 2px solid var(--border-color);
+      background: var(--border-color);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .banner-wrapper {
+      position: relative;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .banner-bg {
+      width: 100%;
+      max-width: 500px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    }
+    .banner-avatar {
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      border: 2px solid var(--border-color);
+      border-radius: 50%;
+      background: var(--panel-bg-color);
+    }
+    .flag {
+      width: 24px;
+      height: 18px;
+      border-radius: 3px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <div class="panel">
+      <div class="panel-header">
+        <h1>🔍 INFORMAÇÕES COMPLETAS DO PLAYER FREE FIRE</h1>
+        <p>Digite o UID do jogador para buscar todas as informações disponíveis</p>
+      </div>
+
+      <div class="form-group">
+        <label for="uid">UID do jogador:</label>
+        <input id="uid" type="text" class="input-field" placeholder="Exemplo: 231316225">
+      </div>
+      <button class="submit-btn" onclick="buscarDados()">BUSCAR DADOS</button>
+    </div>
+  </div>
+  
+      <div id="resultado" class="info-results-grid" style="display:none;"></div>
+
+  <script>
+    // format timestamp
+    function formatTimestamp(ts) {
+      if (!ts) return '—';
+      const d = new Date(parseInt(ts) * 1000);
+      return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR');
+    }
+
+    function getFlag(region) {
+      const flags = {
+        VN: "https://flagcdn.com/w20/vn.png",
+        BR: "https://flagcdn.com/w20/br.png",
+        ID: "https://flagcdn.com/w20/id.png",
+        TH: "https://flagcdn.com/w20/th.png",
+        SG: "https://flagcdn.com/w20/sg.png",
+        IN: "https://flagcdn.com/w20/in.png",
+        US: "https://flagcdn.com/w20/us.png",
+        RU: "https://flagcdn.com/w20/ru.png",
+        PK: "https://flagcdn.com/w20/pk.png",
+      };
+      return flags[region] || "";
+    }
+
+    function renderInfoItem(label, value) {
+      return `
+        <div class="info-item-display">
+          <div class="info-label">${label}</div>
+          <div class="info-value">${value ?? '—'}</div>
+        </div>`;
+    }
+
+    function renderPlayerInfo(b, s, profile, diamonds, credit, rarity, price) {
+      const bannerUrl = `https://cdn.freefiredata.com/images/banners/${b.bannerId || 901000001}.png`;
+      const avatarUrl = `https://cdn.freefiredata.com/images/avatars/${b.headPic || 902000001}.png`;
+      const flagUrl = getFlag(b.region);
+
+      return `
+      <div class="info-card">
+        <div class="info-card-header"><span class="material-icons">person</span>INFORMAÇÕES DO PLAYER</div>
+        <div class="info-card-body">
+          <div class="banner-wrapper">
+            <img src="${bannerUrl}" class="banner-bg" alt="Banner">
+            <img src="${avatarUrl}" class="banner-avatar" alt="Avatar">
+          </div>
+          <div class="info-grid">
+            ${renderInfoItem('NICKNAME', b.nickname)}
+            ${renderInfoItem('ID DO JOGADOR', b.accountId)}
+            ${renderInfoItem('REGIÃO', `${b.region || '—'} ${flagUrl ? `<img src='${flagUrl}' class='flag'>` : ''}`)}
+            ${renderInfoItem('NÍVEL', b.level)}
+            ${renderInfoItem('XP', b.exp?.toLocaleString('pt-BR'))}
+            ${renderInfoItem('LIKES', b.liked?.toLocaleString('pt-BR'))}
+            ${renderInfoItem('BADGES', b.badgeCnt)}
+            ${renderInfoItem('RANK BR', b.rankingPoints)}
+            ${renderInfoItem('RANK CS', b.csRankingPoints)}
+            ${renderInfoItem('RELEASE', b.releaseVersion)}
+            ${renderInfoItem('RARIDADE DO ID', `${rarity}%`)}
+            ${renderInfoItem('PREÇO ESTIMADO', `R$ ${price.toFixed(2).replace('.', ',')}`)}
+            ${renderInfoItem('ÚLTIMO LOGIN', formatTimestamp(b.lastLoginAt))}
+            ${renderInfoItem('CRIADO EM', formatTimestamp(b.createAt))}
+            ${renderInfoItem('BIO', s.signature || '—')}
+            ${renderInfoItem('LINGUAGEM', s.language)}
+            ${renderInfoItem('MODO EXIBIDO', s.rankShow)}
+            ${renderInfoItem('ARMA PRINCIPAL (Profile)', profile.pvePrimaryWeapon)}
+            ${renderInfoItem('HABILIDADES EQUIPADAS', Array.isArray(profile.equipedSkills) ? profile.equipedSkills.join(', ') : profile.equipedSkills)}
+            ${renderInfoItem('DIAMANTES', diamonds?.diamondCost)}
+            ${renderInfoItem('PONTUAÇÃO DE CRÉDITO', credit?.creditScore)}
+            ${renderInfoItem('ESTADO RECOMPENSA', credit?.rewardState)}
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function renderPetInfo(petInfo) {
+      if (!petInfo || Object.keys(petInfo).length === 0) return '';
+      const petUrl = `https://cdn.freefiredata.com/images/pets/${petInfo.skinId || petInfo.id || 1300000001}.png`;
+      return `
+      <div class="info-card">
+        <div class="info-card-header"><span class="material-icons">pets</span>INFORMAÇÕES DO PET</div>
+        <div class="info-card-body">
+          <img src="${petUrl}" class="entity-avatar" alt="Pet">
+          <div class="info-grid">
+            ${renderInfoItem('NOME', petInfo.name)}
+            ${renderInfoItem('ID', petInfo.id)}
+            ${renderInfoItem('NÍVEL', petInfo.level)}
+            ${renderInfoItem('EXP', petInfo.exp)}
+            ${renderInfoItem('SELECIONADO?', petInfo.isSelected ? 'SIM' : 'NÃO')}
+            ${renderInfoItem('SKIN ID', petInfo.skinId)}
+            ${renderInfoItem('SKILL', petInfo.selectedSkillId)}
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function renderClanInfo(c) {
+      if (!c || Object.keys(c).length === 0) return '';
+      return `
+      <div class="info-card">
+        <div class="info-card-header"><span class="material-icons">groups</span>INFORMAÇÕES DO GRUPO</div>
+        <div class="info-card-body">
+          <div class="info-grid">
+            ${Object.entries(c).map(([k,v]) => renderInfoItem(k.toUpperCase(), v)).join('')}
+          </div>
+        </div>
+      </div>`;
+    }
+
+    async function buscarDados() {
+      const uid = document.getElementById('uid').value.trim();
+      const r = document.getElementById('resultado');
+      if (!uid) return alert('Digite o UID!');
+      r.style.display = 'block';
+      r.innerHTML = `<div class="info-loading-spinner"></div>`;
+
+      try {
+        const res = await fetch(`http://217.154.239.23:13984/info=${uid}`);
+        const data = await res.json();
+
+        const b = data.basicInfo || {};
+        const p = data.petInfo || {};
+        const s = data.socialInfo || {};
+        const profile = data.profileInfo || {};
+        const diamonds = data.diamondCostRes || {};
+        const credit = data.creditScoreInfo || {};
+        const rarity = Math.floor(Math.random() * 100);
+        const price = (rarity * 0.25) + 9.99;
+
+        const playerCard = renderPlayerInfo(b, s, profile, diamonds, credit, rarity, price);
+        const petCard = renderPetInfo(p);
+        const clanCard = renderClanInfo(data.clanBasicInfo);
+
+        r.innerHTML = `
+          <div class="info-results-grid">
+            ${playerCard}
+            ${petCard}
+            ${clanCard}
+          </div>`;
+      } catch (e) {
+        console.error(e);
+        r.innerHTML = `<p style="color:red;">Erro ao buscar dados ou UID inválido.</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
